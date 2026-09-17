@@ -24,7 +24,7 @@
 
 CCL_NAMESPACE_BEGIN
 
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
 ccl_device_inline bool surface_shader_is_hair_closure(const ClosureType type)
 {
   return type == CLOSURE_BSDF_HAIR_REFLECTION_ID || type == CLOSURE_BSDF_HAIR_TRANSMISSION_ID ||
@@ -225,7 +225,7 @@ ccl_device_inline void surface_shader_prepare_closures(KernelGlobals kg,
     }
   }
 
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
   /* Partition caustic transport without overlap: photon mapping handles sufficiently sharp
    * glossy/transmission lobes reached after a supported broad receiver event, while ordinary path
    * tracing keeps rough caustics and unsupported receivers. */

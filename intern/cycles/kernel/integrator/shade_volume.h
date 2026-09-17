@@ -737,7 +737,7 @@ ccl_device void volume_shadow_null_scattering(KernelGlobals kg,
   }
 }
 
-#  ifdef __KERNEL_METAL__
+#  if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
 /* Attenuate one finite segment of a refracted sensor connection. The sensor task owns
  * this state, so rebuilding its stack cannot disturb a live camera/light path. */
 ccl_device bool bdpt_volume_connection_transmittance(KernelGlobals kg,
@@ -2007,7 +2007,7 @@ ccl_device_forceinline void volume_integrate_heterogeneous(
   volume_equiangular_direct_scatter(kg, state, ray, sd, vstate, result);
 }
 
-#  ifdef __KERNEL_METAL__
+#  if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
 /* Sample a photon ray segment with the same weighted/null tracking implementation as camera paths,
  * but without NEE, film writes, denoising features, or volume scattering-probability guiding. */
 ccl_device PhotonVolumeSampleEvent photon_volume_sample_segment(KernelGlobals kg,
@@ -2799,7 +2799,12 @@ ccl_device_forceinline void integrate_volume_direct_light(
   integrator_state_copy_volume_stack_to_shadow(kg, shadow_state, state);
 }
 
-#  ifdef __KERNEL_METAL__
+#  if defined(__KERNEL_CUDA__)
+/* The volume photon helpers below use the shared photon map helpers. Metal includes this header
+ * from the kernel context before the shading headers, CUDA reaches it from here. */
+#    include "kernel/integrator/photon_mapping.h"
+#  endif
+#  if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
 ccl_device_inline bool photon_mapping_volume_matches(KernelGlobals kg,
                                                      const ccl_global KernelPhoton *photon,
                                                      const int receiver_object,
@@ -3332,7 +3337,7 @@ volume_integrate_event(KernelGlobals kg,
   if (result.indirect_scatter) {
     sd->P = ray->P + result.indirect_t * ray->D;
 
-#  ifdef __KERNEL_METAL__
+#  if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
     if (kernel_data.integrator.use_photon_mapping) {
       const Spectrum photon_L = photon_mapping_volume_gather(
           kg, state, sd, &result.indirect_phases, render_buffer);
@@ -3374,7 +3379,7 @@ volume_integrate_event(KernelGlobals kg,
 #  endif
 
     if (integrate_volume_phase_scatter(kg, state, sd, ray, rng_state, &result.indirect_phases)) {
-#  ifdef __KERNEL_METAL__
+#  if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
       if (kernel_data.integrator.use_photon_mapping) {
         INTEGRATOR_STATE_WRITE(state, path, flag) |= PATH_RAY_PHOTON_MAPPING_RECEIVER;
         INTEGRATOR_STATE_WRITE(state, path, flag) &= ~PATH_RAY_PHOTON_MAPPING_UNSUPPORTED;

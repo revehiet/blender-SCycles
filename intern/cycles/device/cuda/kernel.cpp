@@ -16,7 +16,7 @@ void CUDADeviceKernels::load(CUDADevice *device)
   for (int i = 0; i < (int)DEVICE_KERNEL_NUM; i++) {
     CUDADeviceKernel &kernel = kernels_[i];
 
-    if (!device_kernel_has_gpu_function((DeviceKernel)i)) {
+    if (!device_kernel_has_gpu_function((DeviceKernel)i, false, true)) {
       continue;
     }
 

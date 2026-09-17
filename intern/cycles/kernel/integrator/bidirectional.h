@@ -242,8 +242,8 @@ ccl_device_inline Spectrum bdpt_light_vertex_spectral_weight(
       float light_pdf;
       const float light_wavelength = sample_wavelength(light_rand, &light_pdf);
       const float camera_wavelength = sample_wavelength(camera_rand);
-      return Spectrum(photon_spectral_kernel(light_wavelength, camera_wavelength) /
-                      bdpt_safe_pdf(light_pdf));
+      return make_float3(photon_spectral_kernel(light_wavelength, camera_wavelength) /
+                         bdpt_safe_pdf(light_pdf));
     }
     return dispersion_throughput_weight(kg, light_rand);
   }
@@ -443,7 +443,7 @@ ccl_device_inline float bdpt_emission_mis_weight_lamp(KernelGlobals kg,
  * An inconsistent reverse PDF breaks the partition of the bidirectional MIS weights. */
 /* Keep the full shader graph in one callable body. Replicating it at every MIS query makes
  * Metal compilation and the caller's live register set unnecessarily large. */
-ccl_device __attribute__((noinline)) float bdpt_reverse_pdf(
+ccl_device_noinline float bdpt_reverse_pdf(
     KernelGlobals kg,
     IntegratorState state,
     ccl_private ShaderData *sd,
@@ -2160,6 +2160,7 @@ ccl_device void integrator_bdpt_light_generate(KernelGlobals kg,
     float eta = 1.0f;
     float avg_roughness_squared = 0.0f;
     int label;
+#ifdef __KERNEL_METAL__
     if (kernel_data.integrator.use_surface_guiding && kernel_integrator_state.guiding_capacity > 0)
     {
       const float rand_guiding = hash_uint3_to_float(
@@ -2183,7 +2184,9 @@ ccl_device void integrator_bdpt_light_generate(KernelGlobals kg,
                                                             avg_roughness_squared,
                                                             true);
     }
-    else {
+    else
+#endif /* __KERNEL_METAL__ (GPU path guiding) */
+    {
       label = surface_shader_bsdf_sample_closure(kg,
                                                  &sd,
                                                  sc,

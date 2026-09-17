@@ -38,10 +38,18 @@
 #include "kernel/integrator/intersect_shadow.h"
 #include "kernel/integrator/intersect_subsurface.h"
 #include "kernel/integrator/intersect_volume_stack.h"
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_CUDA__)
+/* The photon mapping and BDPT integrators call into the shading integrators. Metal includes them
+ * from within its kernel context, so pull the shading headers in explicitly for CUDA. */
+#  include "kernel/integrator/shade_background.h"
+#  include "kernel/integrator/shade_volume.h"
+#endif
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
 #  include "kernel/integrator/bidirectional.h"
-#  include "kernel/integrator/guiding_gpu.h"
 #  include "kernel/integrator/photon_mapping.h"
+#endif
+#ifdef __KERNEL_METAL__
+#  include "kernel/integrator/guiding_gpu.h"
 #endif
 #include "kernel/integrator/shade_background.h"
 #include "kernel/integrator/shade_dedicated_light.h"
@@ -88,7 +96,8 @@ ccl_gpu_kernel(GPU_KERNEL_BLOCK_NUM_THREADS, GPU_KERNEL_MAX_REGISTERS)
 ccl_gpu_kernel_postfix
 
 #  endif
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
+#  ifdef __KERNEL_METAL__
 #  if !defined(__KERNEL_METAL_LIGHT_CACHE_ONLY__) && \
       (!defined(__KERNEL_METAL_TRANSPORT_FEATURES__) || \
       (__KERNEL_METAL_TRANSPORT_FEATURES__ & KERNEL_FEATURE_PATH_GUIDING))
@@ -175,6 +184,7 @@ ccl_gpu_kernel(GPU_KERNEL_BLOCK_NUM_THREADS, GPU_KERNEL_MAX_REGISTERS)
 ccl_gpu_kernel_postfix
 
 #  endif
+#  endif /* __KERNEL_METAL__ (GPU guiding kernels) */
 #  if !defined(__KERNEL_METAL_GENERIC_NO_LIGHT_CACHE__) && \
       (!defined(__KERNEL_METAL_TRANSPORT_FEATURES__) || \
        (__KERNEL_METAL_TRANSPORT_FEATURES__ & KERNEL_FEATURE_PHOTON_MAPPING))

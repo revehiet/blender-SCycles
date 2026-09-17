@@ -827,7 +827,7 @@ ccl_device_forceinline int integrate_surface_bsdf_bssrdf_bounce(
 #ifdef __SUBSURFACE__
   /* BSSRDF closure, we schedule subsurface intersection kernel. */
   if (CLOSURE_IS_BSSRDF(sc->type)) {
-#  ifdef __KERNEL_METAL__
+#  if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
     if (kernel_data.integrator.use_bidirectional_path_tracing) {
       INTEGRATOR_STATE_WRITE(state, path, flag) |= PATH_RAY_BDPT_UNSUPPORTED;
       INTEGRATOR_STATE_WRITE(state, path, flag) &= ~PATH_RAY_BDPT_VOLUME_SENSOR;
@@ -841,7 +841,7 @@ ccl_device_forceinline int integrate_surface_bsdf_bssrdf_bounce(
   }
 #endif
   if (CLOSURE_IS_RAY_PORTAL(sc->type)) {
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
     if (kernel_data.integrator.use_photon_mapping) {
       INTEGRATOR_STATE_WRITE(state, path, flag) |= PATH_RAY_PHOTON_MAPPING_UNSUPPORTED;
       INTEGRATOR_STATE_WRITE(state, path, flag) &= ~PATH_RAY_PHOTON_MAPPING_RECEIVER;
@@ -1031,7 +1031,7 @@ ccl_device_forceinline int integrate_surface_bsdf_bssrdf_bounce(
 
   path_state_next(kg, state, label, sd->runtime_flag);
 
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
   if (kernel_data.integrator.use_photon_mapping && !(label & LABEL_TRANSPARENT)) {
     if (surface_shader_photon_mapping_receiver(sc, sd->wi)) {
       INTEGRATOR_STATE_WRITE(state, path, flag) |= PATH_RAY_PHOTON_MAPPING_RECEIVER;
@@ -1277,7 +1277,7 @@ ccl_device int integrate_surface(KernelGlobals kg,
         return LABEL_NONE;
       }
 
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
       if (kernel_data.integrator.use_photon_mapping) {
         const Spectrum photon_L = photon_mapping_gather(kg, state, &sd, render_buffer);
         photon_mapping_write(kg, state, photon_L, render_buffer);
@@ -1375,7 +1375,7 @@ ccl_device int integrate_surface(KernelGlobals kg,
       return LABEL_CACHE_MISS;
     }
 
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
     /* The synthetic diffuse bounce at a BSSRDF exit is not a local photon-map receiver. */
     if (kernel_data.integrator.use_photon_mapping && (path_flag & PATH_RAY_SUBSURFACE)) {
       INTEGRATOR_STATE_WRITE(state, path, flag) |= PATH_RAY_PHOTON_MAPPING_UNSUPPORTED;

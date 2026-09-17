@@ -49,15 +49,35 @@ static bool device_supports_metal_features(const Device *device)
   return false;
 }
 
+/* Photon mapping and bidirectional path tracing are scheduled by the GPU path tracer and require
+ * the GPU light cache kernels. Those are currently implemented for the Metal and CUDA kernels. */
+static bool device_supports_gpu_light_cache_features(const Device *device)
+{
+  if (device->info.type == DEVICE_METAL || device->info.type == DEVICE_CUDA) {
+    return true;
+  }
+
+  if (device->info.type == DEVICE_MULTI) {
+    for (const DeviceInfo &subdevice : device->info.multi_devices) {
+      if (subdevice.type != DEVICE_METAL && subdevice.type != DEVICE_CUDA) {
+        return false;
+      }
+    }
+    return !device->info.multi_devices.empty();
+  }
+
+  return false;
+}
+
 bool Integrator::use_photon_mapping_on_device(const Device *device) const
 {
   return get_use_photon_mapping() && !get_use_bidirectional_path_tracing() &&
-         device_supports_metal_features(device);
+         device_supports_gpu_light_cache_features(device);
 }
 
 bool Integrator::use_bidirectional_path_tracing_on_device(const Device *device) const
 {
-  return get_use_bidirectional_path_tracing() && device_supports_metal_features(device);
+  return get_use_bidirectional_path_tracing() && device_supports_gpu_light_cache_features(device);
 }
 
 static bool photon_input_is_varying(ShaderNode *node, const char *name)
