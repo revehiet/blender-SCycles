@@ -31,6 +31,22 @@
 
 CCL_NAMESPACE_BEGIN
 
+#if defined(__KERNEL_CUDA__)
+/* Defined in the volume shading integrator, which CUDA includes after this header. */
+ccl_device bool bdpt_volume_connection_transmittance(KernelGlobals kg,
+                                                     IntegratorState state,
+                                                     const float3 start,
+                                                     const float3 end,
+                                                     const float time,
+                                                     const float wavelength_rand,
+                                                     const uint segment,
+                                                     ccl_private Spectrum *throughput);
+ccl_device_inline bool volume_shader_sample(KernelGlobals kg,
+                                            IntegratorState state,
+                                            ccl_private ShaderData *ccl_restrict sd,
+                                            ccl_private VolumeShaderCoefficients *coeff);
+#endif
+
 ccl_device_inline bool bdpt_camera_supported()
 {
   const CameraType camera_type = CameraType(kernel_data.cam.type);

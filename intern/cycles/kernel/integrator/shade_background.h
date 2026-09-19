@@ -149,7 +149,7 @@ ccl_device_inline ShaderEvalResult integrate_background(
 
     /* Background MIS weights. */
     float mis_weight;
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
     if (bdpt_enabled_for_emission(state) && kernel_data.background.use_mis) {
       const float3 ray_P = INTEGRATOR_STATE(state, ray, P);
       const float3 ray_D = INTEGRATOR_STATE(state, ray, D);
@@ -169,7 +169,7 @@ ccl_device_inline ShaderEvalResult integrate_background(
     mis_weight = light_sample_mis_weight_forward_background(kg, state, path_visibility, path_flag);
 #endif
 
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
     if (kernel_data.background.use_mis && bdpt_volume_sensor_owns_camera_path(state)) {
       mis_weight = 0.0f;
     }
@@ -258,7 +258,7 @@ ccl_device_inline ShaderEvalResult integrate_sun_lights(
 
     /* MIS weighting. */
     float mis_weight;
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
     if (bdpt_enabled_for_emission(state)) {
       const float3 ray_P = INTEGRATOR_STATE(state, ray, P);
       const float direct_pdf_w = kernel_data.integrator.distribution_pdf_lights * light_eval.pdf;
@@ -277,7 +277,7 @@ ccl_device_inline ShaderEvalResult integrate_sun_lights(
         kg, state, path_visibility, path_flag, klight->object_id, light_eval.pdf);
 #endif
 
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
     if (bdpt_volume_sensor_owns_camera_path(state, 0, klight->max_bounces)) {
       mis_weight = 0.0f;
     }

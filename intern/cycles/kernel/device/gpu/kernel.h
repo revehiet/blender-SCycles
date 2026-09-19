@@ -33,17 +33,26 @@
 #include "kernel/integrator/init_from_bake.h"
 #include "kernel/integrator/init_from_camera.h"
 #include "kernel/integrator/intersect_closest.h"
+#if defined(__KERNEL_CUDA__)
+/* The light cache integrators (photon mapping and bidirectional path tracing) are shared with the
+ * shading kernels. Metal includes them from inside its kernel context, which runs before the
+ * shading headers; CUDA needs them here, before the first shading header that calls into them. */
+#  include "kernel/camera/camera.h"
+#  include "kernel/geom/primitive.h"
+#  include "kernel/integrator/intersect_volume_stack.h"
+#  include "kernel/integrator/volume_shader.h"
+#  include "kernel/integrator/bidirectional_transport.h"
+#  include "kernel/integrator/bidirectional_volume.h"
+#  include "kernel/integrator/bidirectional.h"
+#  include "kernel/integrator/shade_background.h"
+#  include "kernel/integrator/shade_volume.h"
+#  include "kernel/integrator/photon_mapping.h"
+#endif
 #include "kernel/integrator/intersect_dedicated_light.h"
 #include "kernel/integrator/intersect_mnee.h"
 #include "kernel/integrator/intersect_shadow.h"
 #include "kernel/integrator/intersect_subsurface.h"
 #include "kernel/integrator/intersect_volume_stack.h"
-#if defined(__KERNEL_CUDA__)
-/* The photon mapping and BDPT integrators call into the shading integrators. Metal includes them
- * from within its kernel context, so pull the shading headers in explicitly for CUDA. */
-#  include "kernel/integrator/shade_background.h"
-#  include "kernel/integrator/shade_volume.h"
-#endif
 #if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
 #  include "kernel/integrator/bidirectional.h"
 #  include "kernel/integrator/photon_mapping.h"

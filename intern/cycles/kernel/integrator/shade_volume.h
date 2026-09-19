@@ -65,17 +65,6 @@ struct VolumeIntegrateResult {
 /* Number of mantissa bits of floating-point numbers. */
 #  define MANTISSA_BITS 23
 
-/* Volume shader properties
- *
- * extinction coefficient = absorption coefficient + scattering coefficient
- * sigma_t = sigma_a + sigma_s */
-
-struct VolumeShaderCoefficients {
-  Spectrum sigma_t;
-  Spectrum sigma_s;
-  Spectrum emission;
-};
-
 struct EquiangularCoefficients {
   float3 P;
   Interval<float> t_range;
@@ -2655,7 +2644,7 @@ ccl_device_forceinline void integrate_volume_direct_light(
     return;
   }
 
-#  ifdef __KERNEL_METAL__
+#  if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
   if (bdpt_volume_sensor_supports_light(kg, ls.type, ls.prim) &&
       bdpt_volume_sensor_prefix(kg, state, sd, P))
   {
@@ -2676,7 +2665,7 @@ ccl_device_forceinline void integrate_volume_direct_light(
   const Spectrum guiding_scattering_throughput = throughput * bsdf_eval_sum(&phase_eval);
 #  endif
   float mis_weight;
-#  ifdef __KERNEL_METAL__
+#  if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
   mis_weight = bdpt_enabled_for_surface_path(state) ?
                    bdpt_volume_nee_mis_weight(kg, state, sd, phases, P, &ls, phase_pdf) :
                    light_sample_mis_weight_nee(kg, ls.pdf, phase_pdf);
@@ -3133,7 +3122,7 @@ ccl_device_forceinline bool integrate_volume_phase_scatter(
    * The emitter-hit continuation is a third strategy alongside volume NEE and
    * light tracing. Its recursive terms must use the actual scattering point,
    * not the end of the integrated volume segment. */
-#  ifdef __KERNEL_METAL__
+#  if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
   if (bdpt_enabled_for_surface_path(state) && INTEGRATOR_STATE(state, path, bounce) == 0) {
     const float previous_length = sd->ray_length;
     sd->ray_length = len(sd->P - ray->P);
@@ -3210,7 +3199,7 @@ ccl_device_forceinline bool integrate_volume_phase_scatter(
   }
 #  endif
 
-#  ifdef __KERNEL_METAL__
+#  if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
   if (bdpt_enabled_for_surface_path(state)) {
     /* Repeated medium vertices need free-flight strategy densities that are intentionally not
      * approximated by the compact surface recursion. Keep the complete camera estimator after
@@ -3364,7 +3353,7 @@ volume_integrate_event(KernelGlobals kg,
     }
 #  endif
 
-#  ifdef __KERNEL_METAL__
+#  if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
     if (kernel_data.integrator.use_bidirectional_path_tracing &&
         INTEGRATOR_STATE(state, path, volume_bounce) == 0)
     {

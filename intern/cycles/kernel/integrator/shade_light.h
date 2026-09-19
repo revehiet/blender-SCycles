@@ -65,7 +65,7 @@ ccl_device_inline ShaderEvalResult integrate_light_forward(
 
   /* MIS weighting. */
   float mis_weight;
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
   const ccl_global KernelLight *klight = &kernel_data_fetch(lights, isect.prim);
   const bool bdpt_emitter_supported = !(
       (klight->type == LIGHT_POINT || klight->type == LIGHT_SPOT) && !klight->spot.is_sphere &&
@@ -79,7 +79,7 @@ ccl_device_inline ShaderEvalResult integrate_light_forward(
       kg, state, path_visibility, path_flag, isect.object, light_eval.pdf, ray_P);
 #endif
 
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
   if (bdpt_emitter_supported && bdpt_volume_sensor_owns_camera_path(state, 0, klight->max_bounces)) {
     mis_weight = 0.0f;
   }
@@ -87,7 +87,7 @@ ccl_device_inline ShaderEvalResult integrate_light_forward(
 
   /* Write to render buffer. */
   guiding_record_surface_emission(kg, state, eval, mis_weight);
-#ifndef __KERNEL_METAL__
+#if !defined(__KERNEL_METAL__) && !defined(__KERNEL_CUDA__)
   const ccl_global KernelLight *klight = &kernel_data_fetch(lights, isect.prim);
 #endif
   film_write_surface_emission(kg,

@@ -21,6 +21,22 @@
 
 CCL_NAMESPACE_BEGIN
 
+#if defined(__KERNEL_CUDA__)
+/* Defined by the shading integrators, which CUDA includes after this header. Declared here so that
+ * this header stays self-contained regardless of the include order of the shading kernels. */
+ccl_device Spectrum integrator_eval_background_shader(KernelGlobals kg,
+                                                     IntegratorState state,
+                                                     ccl_global float *ccl_restrict render_buffer,
+                                                     ccl_private ShaderEvalResult &result);
+ccl_device PhotonVolumeSampleEvent photon_volume_sample_segment(
+    KernelGlobals kg,
+    IntegratorState state,
+    const ccl_private Ray *ray,
+    ccl_private Spectrum *power,
+    ccl_private float3 *scatter_P,
+    ccl_private int *receiver_object);
+#endif
+
 /* Tag volume receivers without growing the compact photon record. Cycles object indices are
  * non-negative, leaving the sign bit available to distinguish the 3D volume estimator from the
  * surface estimator. */

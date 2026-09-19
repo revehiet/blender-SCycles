@@ -14,6 +14,9 @@
 #ifdef __SVM__
 #  include "kernel/svm/svm.h"
 #endif
+
+#include "kernel/types.h"
+
 #ifdef __OSL__
 #  include "kernel/osl/osl.h"
 #endif
@@ -24,6 +27,17 @@
 #include "kernel/integrator/volume_stack.h"
 
 CCL_NAMESPACE_BEGIN
+
+/* Volume shader properties
+ *
+ * extinction coefficient = absorption coefficient + scattering coefficient
+ * sigma_t = sigma_a + sigma_s */
+
+struct VolumeShaderCoefficients {
+  Spectrum sigma_t;
+  Spectrum sigma_s;
+  Spectrum emission;
+};
 
 #ifdef __VOLUME__
 
