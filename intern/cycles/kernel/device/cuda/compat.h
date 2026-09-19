@@ -73,6 +73,88 @@ typedef unsigned long long uint64_t;
 #define ccl_gpu_syncthreads() __syncthreads()
 #define ccl_gpu_ballot(predicate) __ballot_sync(0xFFFFFFFF, predicate)
 
+/* GPU warp (SIMD group) collectives, mirroring the Metal SIMD group functions used by the GPU
+ * path guiding. Note that the kernel types are not available yet at this point, so the builtin
+ * types are used. The active mask is queried so that the callers which validate the group with
+ * `ccl_gpu_simd_sum(1u)` observe the number of active lanes, as they do on Metal. */
+
+ccl_device_forceinline unsigned int ccl_gpu_simd_sum(const unsigned int value)
+{
+  const unsigned int mask = __activemask();
+  unsigned int sum = value;
+  sum += __shfl_xor_sync(mask, sum, 16);
+  sum += __shfl_xor_sync(mask, sum, 8);
+  sum += __shfl_xor_sync(mask, sum, 4);
+  sum += __shfl_xor_sync(mask, sum, 2);
+  sum += __shfl_xor_sync(mask, sum, 1);
+  return sum;
+}
+
+ccl_device_forceinline float ccl_gpu_simd_sum(const float value)
+{
+  const unsigned int mask = __activemask();
+  float sum = value;
+  sum += __shfl_xor_sync(mask, sum, 16);
+  sum += __shfl_xor_sync(mask, sum, 8);
+  sum += __shfl_xor_sync(mask, sum, 4);
+  sum += __shfl_xor_sync(mask, sum, 2);
+  sum += __shfl_xor_sync(mask, sum, 1);
+  return sum;
+}
+
+ccl_device_forceinline float ccl_gpu_simd_max(const float value)
+{
+  const unsigned int mask = __activemask();
+  float maximum = value;
+  maximum = fmaxf(maximum, __shfl_xor_sync(mask, maximum, 16));
+  maximum = fmaxf(maximum, __shfl_xor_sync(mask, maximum, 8));
+  maximum = fmaxf(maximum, __shfl_xor_sync(mask, maximum, 4));
+  maximum = fmaxf(maximum, __shfl_xor_sync(mask, maximum, 2));
+  maximum = fmaxf(maximum, __shfl_xor_sync(mask, maximum, 1));
+  return maximum;
+}
+
+ccl_device_forceinline unsigned int ccl_gpu_simd_min(const unsigned int value)
+{
+  const unsigned int mask = __activemask();
+  unsigned int minimum = value;
+  minimum = min(minimum, __shfl_xor_sync(mask, minimum, 16));
+  minimum = min(minimum, __shfl_xor_sync(mask, minimum, 8));
+  minimum = min(minimum, __shfl_xor_sync(mask, minimum, 4));
+  minimum = min(minimum, __shfl_xor_sync(mask, minimum, 2));
+  minimum = min(minimum, __shfl_xor_sync(mask, minimum, 1));
+  return minimum;
+}
+
+ccl_device_forceinline unsigned int ccl_gpu_simd_broadcast(const unsigned int value,
+                                                           const unsigned int lane)
+{
+  return __shfl_sync(__activemask(), value, lane);
+}
+
+ccl_device_forceinline float ccl_gpu_simd_shuffle_xor(const float value,
+                                                      const unsigned int mask_lane)
+{
+  return __shfl_xor_sync(__activemask(), value, mask_lane);
+}
+
+ccl_device_forceinline unsigned int ccl_gpu_simd_prefix_exclusive_sum(const unsigned int value)
+{
+  const unsigned int mask = __activemask();
+  unsigned int inclusive = value;
+  inclusive += __shfl_up_sync(mask, inclusive, 16);
+  inclusive += __shfl_up_sync(mask, inclusive, 8);
+  inclusive += __shfl_up_sync(mask, inclusive, 4);
+  inclusive += __shfl_up_sync(mask, inclusive, 2);
+  inclusive += __shfl_up_sync(mask, inclusive, 1);
+  return inclusive - value;
+}
+
+ccl_device_forceinline void ccl_gpu_simd_group_barrier()
+{
+  __syncwarp();
+}
+
 /* GPU texture objects */
 
 typedef unsigned long long CUtexObject;

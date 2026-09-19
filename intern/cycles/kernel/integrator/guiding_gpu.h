@@ -46,7 +46,7 @@ ccl_device void guiding_gpu_begin_update()
 
 ccl_device void guiding_gpu_refine(const uint index)
 {
-  if (metal::simd_sum(1u) != 32u) {
+  if (ccl_gpu_simd_sum(1u) != 32u) {
     const uint fields = kernel_integrator_state.guiding_capacity * GUIDING_FIELD_TYPES;
     atomic_fetch_and_or_uint32(kernel_integrator_state.guiding_partition + 3 * fields, 8u);
     return;
@@ -55,7 +55,7 @@ ccl_device void guiding_gpu_refine(const uint index)
   const uint node = index / 32;
   const uint lane = index % 32;
   uint first = lane == 0 ? field.refine_allocate(node, 1024) : 0;
-  first = metal::simd_broadcast(first, 0);
+  first = ccl_gpu_simd_broadcast(first, 0);
   if (first != 0) {
     field.refine_copy(node, first, lane, 32);
   }
@@ -200,7 +200,7 @@ ccl_device void guiding_gpu_fit(const uint index)
   const auto partition = guiding_gpu_partition();
   /* Apple GPU SIMD groups contain 32 lanes. Reject an incompatible execution
    * width explicitly rather than mixing independent fields in a reduction. */
-  if (metal::simd_sum(1u) != 32u) {
+  if (ccl_gpu_simd_sum(1u) != 32u) {
     atomic_fetch_and_or_uint32(partition.error, 8u);
     return;
   }
@@ -240,10 +240,10 @@ ccl_device void guiding_gpu_fit(const uint index)
   for (uint i = lane; i < count; i += 32) {
     maximum_weight = max(maximum_weight, range[i].w);
   }
-  maximum_weight = metal::simd_max(maximum_weight);
+  maximum_weight = ccl_gpu_simd_max(maximum_weight);
   const ccl_global float *model = field.sampling + distribution * field.sampling_size +
                                   field.tree_size;
-  const float model_mass = metal::simd_sum(lane < GuidingGaussianMixture::components ?
+  const float model_mass = ccl_gpu_simd_sum(lane < GuidingGaussianMixture::components ?
       model[lane * GuidingGaussianMixture::component_stride] : 0.0f);
   if (!(model_mass > 0.0f)) {
     if (partial && lane < GuidingGaussianMixture::components) {

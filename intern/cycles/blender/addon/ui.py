@@ -117,6 +117,11 @@ def use_metal(context):
     return (get_device_type(context) == 'METAL' and use_gpu(context))
 
 
+def use_metal_or_cuda(context):
+    """Light cache features (BDPT, photon mapping) are implemented for Metal and CUDA."""
+    return use_metal(context) or use_cuda(context)
+
+
 def use_cuda(context):
     return (get_device_type(context) == 'CUDA' and use_gpu(context))
 
@@ -765,12 +770,12 @@ class CYCLES_RENDER_PT_light_paths_bidirectional(CyclesButtonsPanel, Panel):
         layout.use_property_decorate = False
 
         cscene = context.scene.cycles
-        metal_enabled = use_metal(context)
-        layout.active = cscene.use_bidirectional_path_tracing and metal_enabled
+        gpu_light_cache_enabled = use_metal_or_cuda(context)
+        layout.active = cscene.use_bidirectional_path_tracing and gpu_light_cache_enabled
 
-        if not metal_enabled:
+        if not gpu_light_cache_enabled:
             box = layout.box()
-            box.label(text="Requires an active Metal GPU device", icon='INFO')
+            box.label(text="Requires an active Metal GPU or CUDA device", icon='INFO')
 
         col = layout.column(align=True)
         col.prop(cscene, "bdpt_light_paths")
