@@ -15,6 +15,13 @@
 #include "kernel/integrator/state_util.h"
 #include "kernel/sample/guiding_resampling.h"
 
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
+/* The GPU guiding state, field methods and their atomics. Metal pulls this in from its kernel
+ * context; CUDA has no such context, so the shading headers that call into it include it here,
+ * after the light headers it depends on. */
+#  include "kernel/integrator/guiding_gpu.h"
+#endif
+
 #ifdef __SVM__
 #  include "kernel/svm/svm.h"
 #endif
@@ -441,7 +448,7 @@ ccl_device_inline float surface_shader_bsdf_eval_pdfs(const KernelGlobals kg,
   return (sum_sample_weight > 0.0f) ? sum_pdf / sum_sample_weight : 0.0f;
 }
 
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
 ccl_device_inline float3 surface_shader_gpu_guiding_normal(const ccl_private ShaderData *sd)
 {
   /* Orient the product toward this query's incoming direction, including transmission. */
@@ -752,7 +759,7 @@ ccl_device_inline
   }
 #endif
 
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
   if (light_shader_flags & SHADER_USE_MIS) {
     pdf = surface_shader_gpu_guiding_pdf(sd, wo, pdf, guiding_light_path);
   }
@@ -1350,7 +1357,7 @@ ccl_device int surface_shader_bsdf_sample_closure(KernelGlobals kg,
   return label;
 }
 
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
 ccl_device int surface_shader_bsdf_gpu_resampled_closure(
     KernelGlobals kg,
     ccl_private ShaderData *sd,
@@ -1477,7 +1484,7 @@ ccl_device int surface_shader_bsdf_gpu_resampled_closure(
 
 /* Keep the guided proposal/BSDF call graph separate from the bidirectional light tracer and
  * camera integrator. Inlining it duplicates all proposal modes in their optimization units. */
-ccl_device __attribute__((noinline)) int surface_shader_bsdf_gpu_guided_sample_closure(
+ccl_device_noinline int surface_shader_bsdf_gpu_guided_sample_closure(
     KernelGlobals kg,
     ccl_private ShaderData *sd,
     const ccl_private ShaderClosure *sc,

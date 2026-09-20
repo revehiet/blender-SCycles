@@ -1130,7 +1130,7 @@ struct ccl_align(16) ShaderData {
   /* Random number for sampling the wavelength. */
   float rand_wavelength;
 #endif
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
   /* Reuse one spatial/product query across BSDF pdf and sample on the same ShaderData. */
   const ccl_global float *gpu_guiding_weights;
   float3 gpu_guiding_cached_P;

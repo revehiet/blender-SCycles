@@ -413,7 +413,7 @@ ccl_device
   float avg_roughness_squared = 0.0f;
   const float bsdf_pdf = surface_shader_bsdf_eval(
       kg, state, sd, ls.D, &bsdf_eval, ls.shader, avg_roughness_squared);
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
   const Spectrum guiding_scattering_throughput = INTEGRATOR_STATE(state, path, throughput) *
                                                  bsdf_eval_sum(&bsdf_eval);
 #endif
@@ -491,7 +491,7 @@ ccl_device
       mnee_vertex_count,
       is_constant_light_shader);
 
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
   guiding_gpu_shadow_endpoint(shadow_state, sd->P);
   if (mnee_vertex_count == 0) {
     guiding_gpu_record_direct(shadow_state,
@@ -775,7 +775,7 @@ ccl_device_forceinline bool integrate_surface_bidirectional(KernelGlobals kg,
   IntegratorShadowState shadow_state = integrate_direct_light_shadow_init_common(
       kg, state, &ray, connection, light_vertex->light_group, 0, true);
   INTEGRATOR_STATE_WRITE(shadow_state, shadow_path, transparent_bounce) = transparent_bounce;
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
   /* GPU path guiding is Metal only. */
   guiding_gpu_record_direct(shadow_state,
                             state,
@@ -866,7 +866,7 @@ ccl_device_forceinline int integrate_surface_bsdf_bssrdf_bounce(
 
   float bsdf_avg_roughness_squared = 0.0f;
 
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
   if (kernel_data.integrator.use_surface_guiding && kernel_integrator_state.guiding_capacity > 0) {
     const float rand_guiding = path_state_rng_1D(kg, rng_state, PRNG_SURFACE_BSDF_GUIDING);
     const float3 rand_resampling = path_state_rng_3D(kg, rng_state, PRNG_SURFACE_RIS_GUIDING_0);
@@ -984,7 +984,7 @@ ccl_device_forceinline int integrate_surface_bsdf_bssrdf_bounce(
   const Spectrum bsdf_weight = bsdf_eval_sum(&bsdf_eval) / bsdf_pdf;
   INTEGRATOR_STATE_WRITE(state, path, throughput) *= bsdf_weight;
 
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
   GuidingVirtualDistance source_distance;
   guiding_gpu_record_bounce(
       state,
@@ -1243,7 +1243,7 @@ ccl_device int integrate_surface(KernelGlobals kg,
 
     /* After shader evaluation, in case of texture cache miss. */
     guiding_record_surface_segment(kg, state, &sd);
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
     if (sd.runtime_flag & SR_BSDF_HAS_EVAL) {
       guiding_gpu_record_importance(state,
                                     sd.P,

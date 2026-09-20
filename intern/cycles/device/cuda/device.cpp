@@ -147,6 +147,9 @@ void device_cuda_info(vector<DeviceInfo> &devices)
     info.denoisers = 0;
 
     info.has_gpu_queue = true;
+    /* The GPU path guiding implementation is shared with the Metal kernels; the CUDA kernels
+     * compile it unconditionally, so the device can always offer it. */
+    info.has_guiding = true;
 
     /* Check if the device has P2P access to any other device in the system. */
     for (int peer_num = 0; peer_num < count && !info.has_peer_memory; peer_num++) {

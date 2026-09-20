@@ -8,7 +8,7 @@
 
 CCL_NAMESPACE_BEGIN
 
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
 /* Collect against one immutable model. Low 16 lanes return complete component
  * statistics; high lanes only provide the second observation stream. */
 template<typename Range>

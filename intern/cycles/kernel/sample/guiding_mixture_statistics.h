@@ -119,23 +119,23 @@ struct GuidingMixtureStatistics {
     const float w = (observation.direction_weight.w / maximum_weight) * responsibility;
     add(0, w);
     for (int i = 0; i < 3; ++i) {
-      add(1 + i, w * direction[i]);
-      add(4 + i, w * position[i]);
+      add(1 + i, w * float3_component(direction, i));
+      add(4 + i, w * float3_component(position, i));
       for (int j = 0; j < 3; ++j) {
-        add(13 + 3 * i + j, w * direction[i] * position[j]);
+        add(13 + 3 * i + j, w * float3_component(direction, i) * float3_component(position, j));
       }
     }
     int entry = 7;
     for (int i = 0; i < 3; ++i) {
       for (int j = i; j < 3; ++j) {
-        add(entry++, w * position[i] * position[j]);
+        add(entry++, w * float3_component(position, i) * float3_component(position, j));
       }
     }
     add(22, w * w);
     add(global_squared_weight, w * (observation.direction_weight.w / maximum_weight));
     const float3 offset = direction - direction_reference;
     for (int i = 0; i < 3; ++i) {
-      add(directional_offset + i, w * offset[i]);
+      add(directional_offset + i, w * float3_component(offset, i));
     }
     add(directional_offset + 3, w * len_squared(offset));
 
@@ -155,15 +155,15 @@ struct GuidingMixtureStatistics {
     add(position_size + 2, harmonic_weight);
     add(position_size + 3, harmonic_weight * harmonic_weight);
     for (int i = 0; i < 3; ++i) {
-      add(position_size + 4 + i, harmonic_weight * p[i] + finite_weight * direction[i]);
+      add(position_size + 4 + i, harmonic_weight * float3_component(p, i) + finite_weight * float3_component(direction, i));
     }
     entry = position_size + 7;
     for (int i = 0; i < 3; ++i) {
       for (int j = i; j < 3; ++j) {
         add(entry++,
-            harmonic_weight * p[i] * p[j] +
-                finite_weight * (p[i] * direction[j] + direction[i] * p[j]) +
-                distance_weight * direction[i] * direction[j]);
+            harmonic_weight * float3_component(p, i) * float3_component(p, j) +
+                finite_weight * (float3_component(p, i) * float3_component(direction, j) + float3_component(direction, i) * float3_component(p, j)) +
+                distance_weight * float3_component(direction, i) * float3_component(direction, j));
       }
     }
   }
@@ -205,7 +205,7 @@ struct GuidingMixtureStatistics {
     add(directional_offset + 3, 2.0f * dot(shift, sum));
     add(directional_offset + 3, values[0] * len_squared(shift));
     for (int i = 0; i < 3; ++i) {
-      add(directional_offset + i, values[0] * shift[i]);
+      add(directional_offset + i, values[0] * float3_component(shift, i));
     }
     direction_reference = reference;
     return true;

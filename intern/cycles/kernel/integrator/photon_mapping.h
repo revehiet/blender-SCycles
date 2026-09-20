@@ -128,7 +128,7 @@ ccl_device_inline void photon_state_init(IntegratorState state, const uint seed,
   INTEGRATOR_STATE_WRITE(state, path, rng_offset) = 0;
   INTEGRATOR_STATE_WRITE(state, path, throughput) = one_spectrum();
   INTEGRATOR_STATE_WRITE(state, path, min_ray_pdf) = FLT_MAX;
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
   if (kernel_data.integrator.use_guiding) {
     INTEGRATOR_STATE_WRITE(state, path, unguided_throughput) = 1.0f;
     INTEGRATOR_STATE_WRITE(state, gpu_guiding, history_head) = ~0u;

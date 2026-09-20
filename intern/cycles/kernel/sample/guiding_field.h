@@ -28,7 +28,7 @@ ccl_device_inline GuidingFieldType guiding_surface_field_type(const float3 norma
   const int axis = magnitude.x >= magnitude.y && magnitude.x >= magnitude.z ? 0 :
                    magnitude.y >= magnitude.z                               ? 1 :
                                                                               2;
-  const int sector = 2 * axis + int(normal[axis] < 0.0f);
+  const int sector = 2 * axis + int(float3_component(normal, axis) < 0.0f);
   return GuidingFieldType(
       (importance ? GUIDING_FIELD_SURFACE_IMPORTANCE : GUIDING_FIELD_SURFACE_RADIANCE) + sector);
 }
@@ -74,7 +74,7 @@ struct GuidingField {
       if (node->children == 0) {
         break;
       }
-      index = node->children + uint(P[node->axis] >= node->split);
+      index = node->children + uint(float3_component(P, node->axis) >= node->split);
     }
     return index;
   }
@@ -185,7 +185,7 @@ struct GuidingField {
   {
     const float3 extent = upper - lower;
     *axis = extent.x >= extent.y && extent.x >= extent.z ? 0u : extent.y >= extent.z ? 1u : 2u;
-    *split = lower[*axis] + 0.5f * extent[*axis];
+    *split = float3_component(lower, *axis) + 0.5f * float3_component(extent, *axis);
     const float3 normalized_lower = normalized_position(lower);
     const float3 normalized_upper = normalized_position(upper);
     float scale = 0;
@@ -248,9 +248,9 @@ struct GuidingField {
                                                                                                2u;
     /* Avoid arbitrarily thin children when a bright cluster lies at a boundary.
      * Both children retain the full-support parent proposal before specializing. */
-    *split = clamp(bounds_min[*axis] + mean[*axis] * scene_extent[*axis],
-                   lower[*axis] + 0.1f * extent[*axis],
-                   upper[*axis] - 0.1f * extent[*axis]);
+    *split = clamp(float3_component(bounds_min, *axis) + float3_component(mean, *axis) * float3_component(scene_extent, *axis),
+                   float3_component(lower, *axis) + 0.1f * float3_component(extent, *axis),
+                   float3_component(upper, *axis) - 0.1f * float3_component(extent, *axis));
   }
 
   /* At most one invocation per pre-existing node. Child initialization completes before the
@@ -282,10 +282,10 @@ struct GuidingField {
       const ccl_global GuidingSpatialNode *ancestor = &nodes[parent];
       const uint axis = ancestor->axis;
       if (current == ancestor->children) {
-        upper[axis] = min(upper[axis], ancestor->split);
+        float3_component_ref(upper, axis) = min(float3_component(upper, axis), ancestor->split);
       }
       else {
-        lower[axis] = max(lower[axis], ancestor->split);
+        float3_component_ref(lower, axis) = max(float3_component(lower, axis), ancestor->split);
       }
       current = parent;
     }

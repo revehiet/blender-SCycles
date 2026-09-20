@@ -46,8 +46,8 @@ bool device_kernel_has_intersection(DeviceKernel kernel)
 
 bool device_kernel_has_gpu_function(DeviceKernel kernel, const bool metal, const bool cuda)
 {
-  /* GPU path guiding is implemented by the Metal kernels only. */
-  if (!metal &&
+  /* GPU path guiding is implemented by the Metal and CUDA kernels. */
+  if (!metal && !cuda &&
       (kernel == DEVICE_KERNEL_GUIDING_BEGIN_UPDATE || kernel == DEVICE_KERNEL_GUIDING_REFINE ||
        kernel == DEVICE_KERNEL_GUIDING_PUBLISH || kernel == DEVICE_KERNEL_GUIDING_FLUSH_HISTORY ||
        kernel == DEVICE_KERNEL_GUIDING_PARTITION_COUNT ||

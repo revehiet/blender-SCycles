@@ -58,6 +58,8 @@ struct ccl_try_align(16) float3
   }
 #  endif
 
+  /* The GPU vector types are native backend types which are subscripted only where the backend
+   * supports it; shared code should use float3_component() instead. */
 #  ifndef __KERNEL_GPU__
   __forceinline float operator[](int i) const
   {
@@ -86,6 +88,18 @@ ccl_device_inline float3 make_float3(const float x, const float y, float z)
 }
 
 #endif /* __KERNEL_NATIVE_VECTOR_TYPES__ */
+
+/* Component access that works for both the native backend vector types (Metal has subscripting
+ * built in, CUDA's builtin float3 does not) and Cycles' portable structure. */
+ccl_device_inline float float3_component(const float3 v, const int i)
+{
+  return (i == 0) ? v.x : ((i == 1) ? v.y : v.z);
+}
+
+ccl_device_inline float &float3_component_ref(float3 &v, const int i)
+{
+  return (i == 0) ? v.x : ((i == 1) ? v.y : v.z);
+}
 
 ccl_device_inline float3 make_float3(const float f)
 {

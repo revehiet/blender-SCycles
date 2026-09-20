@@ -84,7 +84,7 @@ static size_t estimate_single_state_size(const uint64_t kernel_features,
 #define KERNEL_STRUCT_VOLUME_STACK_SIZE 4
 #define KERNEL_STRUCT_CPU_GUIDING_FEATURE 0
 #define KERNEL_STRUCT_GPU_GUIDING_FEATURE \
-  (device_type == DEVICE_METAL ? KERNEL_FEATURE_PATH_GUIDING : 0)
+  ((device_type == DEVICE_METAL || device_type == DEVICE_CUDA) ? KERNEL_FEATURE_PATH_GUIDING : 0)
 
 #include "kernel/integrator/state_template.h"
 
@@ -246,7 +246,9 @@ void PathTraceWorkGPU::alloc_integrator_soa()
    * pointer slots in the shared ABI, but do not allocate or copy unused arrays for every path. */
 #define KERNEL_STRUCT_CPU_GUIDING_FEATURE 0
 #define KERNEL_STRUCT_GPU_GUIDING_FEATURE \
-  (device_->info.type == DEVICE_METAL ? KERNEL_FEATURE_PATH_GUIDING : 0)
+  ((device_->info.type == DEVICE_METAL || device_->info.type == DEVICE_CUDA) ? \
+       KERNEL_FEATURE_PATH_GUIDING : \
+       0)
 
   bool shadow = false;
 #include "kernel/integrator/state_template.h"
@@ -376,7 +378,8 @@ void PathTraceWorkGPU::alloc_gpu_guiding()
             << " enabled=" << device_scene_->data.integrator.use_guiding
             << " directional_sampling="
             << device_scene_->data.integrator.guiding_directional_sampling_type;
-  if (device_->info.type != DEVICE_METAL || !device_scene_->data.integrator.use_guiding) {
+  if ((device_->info.type != DEVICE_METAL && device_->info.type != DEVICE_CUDA) ||
+      !device_scene_->data.integrator.use_guiding) {
     guiding_nodes_.free();
     guiding_accumulation_.free();
     guiding_sampling_.free();

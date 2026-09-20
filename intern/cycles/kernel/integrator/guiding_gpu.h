@@ -17,7 +17,7 @@
 
 CCL_NAMESPACE_BEGIN
 
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
 
 ccl_device_inline float3 guiding_gpu_surface_orientation(const ccl_private ShaderData *sd)
 {

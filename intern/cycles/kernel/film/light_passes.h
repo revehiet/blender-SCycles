@@ -7,7 +7,7 @@
 #include "kernel/film/write.h"
 
 #include "kernel/integrator/shadow_catcher.h"
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
 #  include "kernel/integrator/guiding_gpu.h"
 #endif
 
@@ -495,7 +495,7 @@ ccl_device_inline void film_write_direct_light(KernelGlobals kg,
 {
   /* The throughput for shadow paths already contains the light shader evaluation. */
   Spectrum contribution = INTEGRATOR_STATE(state, shadow_path, throughput);
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
   if (!(INTEGRATOR_STATE(state, shadow_path, flag) & PATH_RAY_SHADOW_FOR_AO)) {
     guiding_gpu_record_shadow_radiance(state, contribution);
   }
@@ -643,7 +643,7 @@ ccl_device_inline void film_write_background(KernelGlobals kg,
                                              ccl_global float *ccl_restrict render_buffer)
 {
   Spectrum contribution = INTEGRATOR_STATE(state, path, throughput) * L;
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
   guiding_gpu_record_radiance(state, contribution);
 #endif
   film_clamp_light(kg, &contribution, INTEGRATOR_STATE(state, path, bounce) - 1);
@@ -676,7 +676,7 @@ ccl_device_inline void film_write_volume_emission(KernelGlobals kg,
                                                   const int lightgroup = LIGHTGROUP_NONE)
 {
   Spectrum contribution = L;
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
   guiding_gpu_record_radiance(state, contribution);
 #endif
   film_clamp_light(kg, &contribution, INTEGRATOR_STATE(state, path, bounce) - 1);
@@ -701,7 +701,7 @@ ccl_device_inline void film_write_surface_emission(
     ccl_attr_maybe_unused const float3 source_position = make_float3(FLT_MAX))
 {
   Spectrum contribution = INTEGRATOR_STATE(state, path, throughput) * L * mis_weight;
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
   guiding_gpu_record_radiance(state, contribution, source_position);
 #endif
   film_clamp_light(kg, &contribution, INTEGRATOR_STATE(state, path, bounce) - 1);

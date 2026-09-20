@@ -2176,7 +2176,7 @@ ccl_device void integrator_bdpt_light_generate(KernelGlobals kg,
     float eta = 1.0f;
     float avg_roughness_squared = 0.0f;
     int label;
-#ifdef __KERNEL_METAL__
+#if defined(__KERNEL_METAL__) || defined(__KERNEL_CUDA__)
     if (kernel_data.integrator.use_surface_guiding && kernel_integrator_state.guiding_capacity > 0)
     {
       const float rand_guiding = hash_uint3_to_float(

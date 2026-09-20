@@ -307,9 +307,9 @@ struct GuidingGaussianMixture {
         storage[component_stride * i + 3] = fit.mean_direction.y;
         storage[component_stride * i + 4] = fit.mean_direction.z;
         for (int row = 0; row < 3; ++row) {
-          storage[component_stride * i + 5 + row] = fit.mean_position[row];
+          storage[component_stride * i + 5 + row] = float3_component(fit.mean_position, row);
           for (int col = 0; col < 3; ++col) {
-            storage[component_stride * i + 8 + 3 * row + col] = fit.slope[row][col];
+            storage[component_stride * i + 8 + 3 * row + col] = float3_component(fit.slope[row], col);
           }
         }
         storage[component_stride * i + 17] = 1.0f;
@@ -322,9 +322,9 @@ struct GuidingGaussianMixture {
                                       axis);
         if (source.valid) {
           for (int j = 0; j < 3; ++j) {
-            storage[component_stride * i + 2 + j] = axis[j];
-            storage[component_stride * i + 5 + j] = source.target[j];
-            storage[component_stride * i + 14 + j] = metric_extent[j];
+            storage[component_stride * i + 2 + j] = float3_component(axis, j);
+            storage[component_stride * i + 5 + j] = float3_component(source.target, j);
+            storage[component_stride * i + 14 + j] = float3_component(metric_extent, j);
           }
           for (int j = 0; j < 6; ++j) {
             storage[component_stride * i + 8 + j] = source.covariance[j];

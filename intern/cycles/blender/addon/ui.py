@@ -367,7 +367,7 @@ class CYCLES_RENDER_PT_sampling_path_guiding(CyclesButtonsPanel, Panel):
     @classmethod
     def poll(cls, context):
         from . import engine
-        return use_metal(context) or (use_cpu(context) and engine.with_path_guiding())
+        return use_metal_or_cuda(context) or (use_cpu(context) and engine.with_path_guiding())
 
     def draw_header(self, context):
         scene = context.scene
@@ -386,13 +386,13 @@ class CYCLES_RENDER_PT_sampling_path_guiding(CyclesButtonsPanel, Panel):
         layout.active = cscene.use_guiding
 
         layout.prop(cscene, "guiding_training_samples",
-                    text="Training Camera Samples" if use_metal(context) else "Training Updates")
+                    text="Training Camera Samples" if use_metal_or_cuda(context) else "Training Updates")
 
         col = layout.column(align=True)
         col.prop(cscene, "use_surface_guiding", text="Surface")
         col.prop(cscene, "use_volume_guiding", text="Volume", text_ctxt=i18n_contexts.id_id)
 
-        if use_metal(context):
+        if use_metal_or_cuda(context):
             layout.prop(cscene, "guiding_gpu_memory_mb", text="Field Memory (MiB)")
             layout.prop(cscene, "guiding_gpu_history_memory_mb", text="Training Memory (MiB)")
             col = layout.column(align=True)
